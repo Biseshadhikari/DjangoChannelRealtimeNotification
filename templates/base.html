@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {%block content%}
+    
+    {%endblock content%}
+
+    <script>
+        const friendReqBtns = document.querySelectorAll(".friendReqBtn");
+        const message_username = JSON.parse(document.getElementById('json-message-username').textContent)
+
+
+        const socket = new WebSocket(
+                'ws://'
+                +window.location.host
+                +'/ws/connect'
+                
+                +"/"
+            );
+        socket.onopen = (e)=> {
+            console.log("connection established")
+            // console.log(e)
+
+        }
+        socket.onclose = (e)=> {
+                console.log(e)
+            }
+        socket.onmessage = (e)=> {
+            const data =JSON.parse(e.data)
+            const user = data.username
+           
+            document.querySelector("#container").innerHTML += `${
+            data.message
+            }`
+          
+            
+        }
+
+        friendReqBtns.forEach((btn) => {
+                btn.addEventListener("click", function () {
+                // Extract user ID from the button's data attribute
+                const username = this.getAttribute("data-user-username");
+                // console.log(userId)
+                // Call a function to handle friend request logic
+                sendFriendRequest(username);
+                });
+      });
+
+        function sendFriendRequest(username) {
+            socket.send(JSON.stringify({ 
+                'message':"friend request send",
+                'username':username
+            }))
+            
+        }
+
+    </script>
+</body>
+</html>

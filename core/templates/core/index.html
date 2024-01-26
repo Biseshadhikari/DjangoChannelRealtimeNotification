@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Hello World</h1>
+  <div>
+    {% for user in users %}
+      <p>{{ user.username }}</p>
+      
+      <button class="friendReqBtn" data-user-username="{{ user.username }}">Send Friend Request</button>
+    {% endfor %}
+  </div>
+  <div id="container"></div>
+
+  {{request.user.username|json_script:"json-message-username"}}
+
+{% endblock content %}
