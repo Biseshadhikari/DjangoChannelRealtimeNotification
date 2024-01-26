@@ -1,64 +1,124 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
-<body>
-    {%block content%}
-    
-    {%endblock content%}
+<body> 
+    <nav class="bg-green-500 p-4 relative">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-white text-2xl font-semibold">Friend Requests</h1>
+            <!-- Notification Icon and Dropdown -->
+            <div class="relative">
+                <button id="notificationBtn" class="text-white focus:outline-none relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                    </svg>
+                    <div class="rounded-full p-1 bg-red-500 text-white absolute -top-3 left-5 hidden" id="notiCount">1</div>
+                </button>
+                <!-- Notification Dropdown -->
+                <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg">
+                    <!-- Add your notification items here -->
+                    <div class="p-2" id="notifMessage"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% block content %}
+    {% endblock content %}
 
     <script>
-        const friendReqBtns = document.querySelectorAll(".friendReqBtn");
-        const message_username = JSON.parse(document.getElementById('json-message-username').textContent)
+        document.addEventListener('DOMContentLoaded', function () {
+            const friendReqBtns = document.querySelectorAll(".friendReqBtn");
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            const notificationcount = document.getElementById('notiCount');
 
-
-        const socket = new WebSocket(
-                'ws://'
-                +window.location.host
-                +'/ws/connect'
-                
-                +"/"
+            const message_username = JSON.parse(document.getElementById('json-message-username').textContent);
+            const socket = new WebSocket(
+                'ws://' + window.location.host + '/ws/connect/'
             );
-        socket.onopen = (e)=> {
-            console.log("connection established")
-            // console.log(e)
 
-        }
-        socket.onclose = (e)=> {
-                console.log(e)
-            }
-        socket.onmessage = (e)=> {
-            const data =JSON.parse(e.data)
-            const user = data.username
-           
-            document.querySelector("#container").innerHTML += `${
-            data.message
-            }`
-          
-            
-        }
+            socket.onopen = (e) => {
+                console.log("Connection established");
+            };
 
-        friendReqBtns.forEach((btn) => {
-                btn.addEventListener("click", function () {
-                // Extract user ID from the button's data attribute
+            socket.onclose = (e) => {
+                console.log("Connection closed");
+            };
+
+            socket.onmessage = ((e) => {
+                const data = JSON.parse(e.data);
+                const user = data.username;
+                console.log(data);
+
+                if (data.reqtype === "request") {
+                    document.querySelector("#notifMessage").innerHTML += `${data.message}`;
+                    notificationcount.classList.remove('hidden');
+                    friendReqBtns.forEach(btn => {
+                        if (btn.getAttribute('data-user-username') === user) {
+                            btn.innerText = "Accept Request";
+                            btn.classList.replace("friendReqBtn", "acceptBtn");
+                            btn.removeEventListener('click', sendFriendRequest);
+                            btn.addEventListener('click', () => {
+                                // console.log("Accept clicked");
+                                btn.innerText = "friend"
+                                acceptRequest(user);
+                            });
+                        }
+                    });
+                } else if (data.reqtype === "accept") {
+                    document.querySelector("#notifMessage").innerHTML += `${data.message}`;
+                    notificationcount.classList.remove('hidden');
+                    friendReqBtns.forEach(btn => {
+                        if (btn.getAttribute('data-user-username') === user) {
+                            btn.innerText = "Accepted";
+                            btn.disabled = true; // Disable the button after accepting
+                        }
+                    });
+                }
+            });
+
+            friendReqBtns.forEach(btn => {
+                
+
+                btn.addEventListener("click", sendFriendRequest);
+                
+            });
+
+            function sendFriendRequest() {
                 const username = this.getAttribute("data-user-username");
-                // console.log(userId)
-                // Call a function to handle friend request logic
-                sendFriendRequest(username);
-                });
-      });
+                this.innerText = 'sent'
+                socket.send(JSON.stringify({
+                    'requesttype': "request", // Changed from 'requestType' to 'reqtype'
+                    'message': `${message_username} sent you a friend request`,
+                    'username': username
+                }));
+            }
 
-        function sendFriendRequest(username) {
-            socket.send(JSON.stringify({ 
-                'message':"friend request send",
-                'username':username
-            }))
-            
-        }
+            function acceptRequest(username) {
+                socket.send(JSON.stringify({
+                    'requesttype': "accept", // Changed from 'requestType' to 'reqtype'
+                    'message': `${message_username} accepted your friend request`,
+                    'username': username
+                }));
+            }
 
+            notificationBtn.addEventListener('click', function () {
+                notificationDropdown.classList.toggle('hidden');
+                notificationcount.classList.add('hidden');
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!event.target.closest('#notificationDropdown') && !event.target.closest('#notificationBtn')) {
+                    notificationDropdown.classList.add('hidden');
+                }
+            });
+        });
     </script>
+
 </body>
 </html>

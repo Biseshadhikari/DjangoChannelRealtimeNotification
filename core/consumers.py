@@ -25,18 +25,37 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
+        print(data)
         message = data['message']
         target_username = data['username']
+        reqType = data['requesttype']
+        # print(reqType)
+        
+        if reqType =="request":
+
 
         # Check if the target user is connected and send the message
-        await self.channel_layer.group_send(
-            f"friendreq_{target_username}",
-            {
-                'type': 'chat.message',
-                'message': message,
-                'username': self.username,
-            }
-        )
+            await self.channel_layer.group_send(
+                f"friendreq_{target_username}",
+                {
+                    'type': 'chat.message',
+                    'message': message,
+                    'username': self.username,
+                    'requestType':reqType
+
+                }
+            )
+        elif reqType == "accept": 
+            await self.channel_layer.group_send(
+                f"friendreq_{target_username}",
+                {
+                    'type': 'chat.accept',
+                    'message': message,
+                    'username': self.username,
+                    'requestType':reqType
+                }
+            )
+
 
     async def chat_message(self, event):
         message = event['message']
@@ -44,6 +63,19 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
 
         # Send the message to the WebSocket
         await self.send(text_data=json.dumps({
+            'reqtype':event['requestType'],
             'message': message,
-            'username': username
+            'username': username,
+            
+        }))
+    async def chat_accept(self, event):
+        message = event['message']
+        username = event['username']
+        print(event)
+        # Send the message to the WebSocket
+        await self.send(text_data=json.dumps({
+            'reqtype':event['requestType'],
+            'message': message,
+            'username': username,
+            
         }))

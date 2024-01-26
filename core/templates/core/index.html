@@ -1,14 +1,38 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h1>Hello World</h1>
-  <div>
-    {% for user in users %}
-      <p>{{ user.username }}</p>
-      
-      <button class="friendReqBtn" data-user-username="{{ user.username }}">Send Friend Request</button>
-    {% endfor %}
-  </div>
+<div class="container mx-auto mt-6 p-6 bg-white shadow rounded-lg">
+
+    <!-- Friend List -->
+    {%if request.user.is_authenticated%}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <!-- Sample Friend Card -->
+        {% for user in users %}
+        <div class="bg-gray-200 p-4 rounded-lg flex ">
+            <div class="flex justify-between gap-10 items-center  mb-2">
+                <p class="text-gray-800 font-semibold">{{user.username}}</p>
+                <div class="reqSection">
+
+                    <button class="friendReqBtn p-3 bg-blue-500 text-white rounded-xl " data-user-username="{{ user.username }}">Add Friend</button>
+                </div>
+
+            </div>
+            
+
+        </div>
+        {%endfor%}
+        
+
+        <!-- Add more friend cards here -->
+    </div>
+    {%else%}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <h1>Please Login to send friend request</h1>
+    </div>
+
+    {%endif%}
+</div>
+
   <div id="container"></div>
 
   {{request.user.username|json_script:"json-message-username"}}
