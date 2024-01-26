@@ -75,6 +75,4 @@ This project is a basic demonstration and may require additional features, such 
 - Channels
 - Tailwind CSS
 
-## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
